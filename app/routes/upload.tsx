@@ -92,22 +92,36 @@ console.log("AI feedback done ✅");
   await kv.set(`resume-${uuid}`,JSON.stringify(data));
   setStatusText('Analysis Completed!');
   console.log(data);
-  setIsProcessing(false);
+  
+  // Debug log to confirm navigation is attempted
+  console.log('Navigating to result page for', uuid);
+  try {
+    navigate(`/resume/${uuid}`);
+  } catch (navErr) {
+    console.error('Navigation failed', navErr);
+  }
 }
 
 
-    function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-           event.preventDefault();
-           const form=event.currentTarget.closest('form');
-           if(!form) return;
-           const formData=new FormData(form);
-           const companyName=formData.get('company-name') as string;
-            const jobTitle=formData.get('job-title') as string;
-            const jobDescription=formData.get('job-discrption') as string;
-           if(!file) return;
-          handleAnalyse({companyName,jobTitle,jobDescription,file});
-      
-        }
+    async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+      // Prevent the browser from performing a full page navigation
+      event.preventDefault();
+
+      // The event.currentTarget is the form element in React's FormEvent
+      const form = event.currentTarget as HTMLFormElement;
+      const formData = new FormData(form);
+
+      const companyName = (formData.get('company-name') || '') as string;
+      const jobTitle = (formData.get('job-title') || '') as string;
+      const jobDescription = (formData.get('job-description') || '') as string;
+
+      if (!file) {
+        // Optionally show a message to the user here
+        return;
+      }
+
+      await handleAnalyse({ companyName, jobTitle, jobDescription, file });
+    }
 const handleFileSelect=(file:File|null)=>{
 setFile(file);
 }
@@ -127,7 +141,7 @@ setFile(file);
             <h2>Drop your resume for an ATS score </h2>
         )}
         {!isProcessing  && (
-               <form action="" id='upload-form' onSubmit={handleSubmit} className='flex flex-col gap-4 mt-8'>
+               <form id='upload-form' onSubmit={handleSubmit} className='flex flex-col gap-4 mt-8'>
                  <div className='form-div'>
                 <label htmlFor="company-name">Company Name</label>
                 <input type="text" name='company-name' placeholder='Company Name' id='company-name'/>
@@ -137,14 +151,14 @@ setFile(file);
                 <input type="text" name='job-title' placeholder='Job title' id='job-title'/>
                  </div>
                          <div className='form-div'>
-                <label htmlFor="job-description">Job Discrebtion</label>
-                <textarea rows={5} name='job-discrption' placeholder='Job Discrption' id='job-discription'></textarea>
+    <label htmlFor="job-description">Job Description</label>
+    <textarea rows={5} name='job-description' placeholder='Job Description' id='job-description'></textarea>
                  </div>
                      <div className='form-div'>
                 <label htmlFor="uploader">Upload Resume</label>
                 <FileUploader onFileSelect={handleFileSelect}/>
                  </div>
-                 <button className='primary-button' type='submit'>Analyse Resume</button>
+                 <button className='primary-button' type='submit' disabled={isProcessing}>Analyse Resume</button>
                </form>
         )}
     </div>
